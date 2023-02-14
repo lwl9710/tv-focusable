@@ -31,48 +31,181 @@
       height: 175px;
       background-color: orangered;
     }
+    .right div.blue {
+        display: flex;
+        justify-content: space-between;
+        align-content: space-between;
+        flex-wrap: wrap;
+        background-color: transparent;
+    }
+    .right div.blue div {
+        width: 122px;
+        height: 79px;
+        background-color: deepskyblue;
+    }
     .focusable-el-extract {
         background-color: greenyellow !important;
     }
     .other {
         position: fixed;
         left: 100px;
-        top: 500px;
+        top: 300px;
         width: 300px;
         height: 300px;
         background-color: brown;
     }
+    .dialog {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, .3);
+        z-index: 1;
+    }
+    .dialog.focusable-root-extract {
+        display: block;
+    }
+    .dialog .btns {
+        position: absolute;
+        margin: auto;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        width: 200px;
+        height: 35px;
+        line-height: 35px;
+    }
+    .dialog .btns .btn {
+        width: 45%;
+        text-align: center;
+        background-color: yellow;
+    }
+    .dialog .btns .btn.
   </style>
   <script src="./js/jquery.js"></script>
 </head>
 <body>
 <div class="box">
-  <div class="left" focusable></div>
+  <div class="left" focusable="autofocus" ok="onOk">dialog</div>
   <div class="right">
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
     <div focusable></div>
     <div focusable></div>
-    <div focusable></div>
-    <div focusable></div>
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
   </div>
 </div>
 <div class="box">
   <div class="left" focusable></div>
   <div class="right">
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
     <div focusable></div>
     <div focusable></div>
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
+  </div>
+</div>
+<div class="box">
+  <div class="left" focusable  ok="onOk">dialog</div>
+  <div class="right">
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
+    <div focusable  ok="onOk">dialog</div>
+    <div focusable></div>
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
+  </div>
+</div>
+<div class="box">
+  <div class="left" focusable></div>
+  <div class="right">
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
     <div focusable></div>
     <div focusable></div>
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
+  </div>
+</div>
+<div class="box">
+  <div class="left" focusable></div>
+  <div class="right">
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
+    <div focusable></div>
+    <div focusable></div>
+    <div class="blue">
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+      <div focusable></div>
+    </div>
   </div>
 </div>
 <div class="other" focusable>
 
 </div>
-<div class="dialog" focusable>
-
+<div class="dialog">
+  <div class="btns" >
+    <div class="btn" focusable>按钮1</div>
+    <div class="btn" focusable ok="onClose">关闭</div>
+  </div>
 </div>
 <script type="text/javascript" src="src/index.js"></script>
 <script type="text/javascript">
-  var dashboard = IFocusable.create(document.body, {});
+  var dashboard = IFocusable.create({
+    methods: {
+      onOk: function() {
+        this.showDialog($(".dialog").get(0));
+      },
+      onClose: function() {
+        this.hideDialog();
+      }
+    }
+  });
 </script>
 </body>
 </html>

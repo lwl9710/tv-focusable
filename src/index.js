@@ -1,9 +1,12 @@
 (function(global) {
   var DEFAULT_OPTIONS = {
     // 安全距离
-    root: global.document.body,
+    root: global.document.documentElement,
     rootExtractClass: "focusable-root-extract",
-    elExtractClass: "focusable-el-extract"
+    elExtractClass: "focusable-el-extract",
+    scrollTime: 200,
+    delay: 200,
+    methods: {}
   }
   var common = {
     // 合并对象
@@ -28,127 +31,144 @@
         left: offset.left,
         top: offset.top,
         right: offset.left + width,
-        bottom: offset.top + height,
-        x: offset.left + (width / 2),
-        y: offset.top + (height / 2)
+        bottom: offset.top + height
       }
+    },
+    useThrottle: function(callback, delay) {
+      if(!delay)delay = 300;
+      var isTrigger = true;
+      return function() {
+        if(isTrigger) {
+          isTrigger = false;
+          setTimeout(function() { isTrigger = true }, delay);
+          callback.apply(this, arguments);
+        }
+      }
+    }
+  }
+  function createKeydownCallback(instance, delay) {
+    var callback = common.useThrottle(function(event) {
+      switch(event.keyCode) {
+        case 13: instance.__ok();break;
+        case 37: instance.__left();break;
+        case 38: instance.__up();break;
+        case 39: instance.__right();break;
+        case 40: instance.__down();break;
+      }
+      event.preventDefault();
+      return false;
+    }, delay);
+    return function(event) {
+      callback(event);
+      event.preventDefault();
+      return false;
     }
   }
   global.IFocusable = {
     create: function(options) {
       options = common.assign(DEFAULT_OPTIONS, {
-        el: $("[focusable]", options.root).get(0)
-      },options);
+        el: $("[focusable=\"autofocus\"]").get(0) || $("[focusable]", options.root).get(0)
+      }, options);
+      if(!options.el) {
+        console.warn("The create is invalid and focusable element not existent.");
+        return ;
+      }
+      var windowHeight = window.innerHeight || document.html.clientHeight || document.body.clientHeight;
       var _position = common.getElementPosition(options.el);
-      var _el = options.el;
-      var _root = options.root;
-      $(_root).addClass(options.rootExtractClass);
-      $(_el).addClass(options.elExtractClass);
+      var _el = null;
+      var _root = null;
+      var beforeEl = null;
       var instance = {
-        up: function() {
-          var self = this;
-          var nextElement = null;
-          var nextPosition = null;
-          var nextThreshold = null;
-          $("[focusable]", options.root).each(function(i, el) {
-            if(el !== self.el) {
-              var position = common.getElementPosition(el);
-              if(position.width > 0 && position.height > 0 && position.top < self.position.top && position.bottom < self.position.bottom) {
-                var threshold = {
-                  x: Math.abs(position.x - self.position.x),
-                  y: Math.abs(self.position.top - position.bottom)
-                }
-                if(nextElement === null || (threshold.y < nextThreshold.y) || (threshold.y === nextThreshold.y && threshold.x < nextThreshold.x)) {
-                  nextElement = el;
-                  nextPosition = position;
-                  nextThreshold = threshold;
-                }
-              }
-            }
-          })
-          if(nextElement !== null) {
-            this.el = nextElement;
-            this.position = nextPosition;
+        methods: options.methods,
+        showDialog: function(dialogRoot, el) {
+          var nextElement =  el || $("[focusable]", dialogRoot).get(0);
+          this.root = dialogRoot;
+          beforeEl = this.el;
+          this.el = nextElement;
+          _position = common.getElementPosition(nextElement);
+        },
+        hideDialog: function() {
+          this.root = options.root;
+          this.el = beforeEl;
+          _position = common.getElementPosition(beforeEl);
+          beforeEl = null;
+        },
+        triggerEvent: function(eventType, el) {
+          if(!el)el = this.el;
+          var propertyArr = ($(el).attr(eventType) || "").split(".");
+          var method = undefined;
+          for (var i = 0; i < propertyArr.length; i++) {
+            method = this.methods[propertyArr[i]];
+          }
+          if(method) {
+            return method.call(this) !== false;
+          } else {
+            return true;
           }
         },
-        down: function() {
+        __ok: function() {
+          this.triggerEvent("ok");
+        },
+        __up: function() {
+          if(this.triggerEvent("up")) {
+            this.__move(function(position) {
+              return position.top < _position.top && position.bottom < _position.bottom;
+            }, function(position) {
+              return Math.abs(position.left - _position.left) + Math.abs(_position.top - position.bottom);
+            });
+          }
+        },
+        __down: function() {
+          if(this.triggerEvent("down")) {
+            this.__move(function(position) {
+              return position.bottom > _position.bottom && position.top > _position.top;
+            }, function(position) {
+              return Math.abs(position.left - _position.left) + Math.abs(position.top - _position.bottom);
+            });
+          }
+        },
+        __left: function() {
+          if(this.triggerEvent("left")) {
+            this.__move(function(position) {
+              return position.left < _position.left && position.right < _position.right;
+            }, function(position) {
+              return Math.abs(_position.left - position.right) + Math.abs(position.top - _position.top);
+            });
+          }
+        },
+        __right: function() {
+          if(this.triggerEvent("right")) {
+            this.__move(function(position) {
+              return position.left > _position.left && position.right > _position.right;
+            }, function(position) {
+              return Math.abs(position.left - _position.right) + Math.abs(position.top - _position.top);
+            });
+          }
+        },
+        // 移动方法
+        __move: function(isValidElement, getThreshold) {
           var self = this;
           var nextElement = null;
-          var nextPosition = null;
-          var nextThreshold = null;
-          $("[focusable]", options.root).each(function(i, el) {
+          var nextPosition = _position;
+          var nextThreshold = 0;
+          $("[focusable]", this.root).each(function(i, el) {
             if(el !== self.el) {
               var position = common.getElementPosition(el);
-              if(position.width > 0 && position.height > 0 && position.bottom > self.position.bottom && position.top > self.position.top) {
+              if(position.width > 0 && position.height > 0 && isValidElement(position, self)) {
                 // 有效元素
-                var threshold = {
-                  x: Math.abs(position.x - self.position.x),
-                  y: Math.abs(position.top - self.position.bottom)
-                }
-                if(nextElement === null || (threshold.y < nextThreshold.y) || (threshold.y === nextThreshold.y && threshold.x < nextThreshold.x)) {
+                var threshold = getThreshold(position, self);
+                if(nextElement === null || (threshold < nextThreshold)) {
                   nextElement = el;
                   nextPosition = position;
                   nextThreshold = threshold;
                 }
               }
             }
-          })
+          });
           if(nextElement !== null) {
+            _position = nextPosition;
             this.el = nextElement;
-            this.position = nextPosition;
-          }
-        },
-        left: function() {
-          var self = this;
-          var nextElement = null;
-          var nextPosition = null;
-          var nextThreshold = null;
-          $("[focusable]", options.root).each(function(i, el) {
-            if(el !== self.el) {
-              var position = common.getElementPosition(el);
-              if(position.width > 0 && position.height > 0 && position.left < self.position.left && position.right < self.position.right) {
-                var threshold = {
-                  x: Math.abs(self.position.left - position.right),
-                  y: Math.abs(position.y - self.position.y)
-                }
-                if(nextElement === null || (threshold.x < nextThreshold.x) || (threshold.x === nextThreshold.x && threshold.y < nextThreshold.y)) {
-                  nextElement = el;
-                  nextPosition = position;
-                  nextThreshold = threshold;
-                }
-              }
-            }
-          })
-          if(nextElement !== null) {
-            this.el = nextElement;
-            this.position = nextPosition;
-          }
-        },
-        right: function() {
-          var self = this;
-          var nextElement = null;
-          var nextPosition = null;
-          var nextThreshold = null;
-          $("[focusable]", options.root).each(function(i, el) {
-            if(el !== self.el) {
-              var position = common.getElementPosition(el);
-              if(position.width > 0 && position.height > 0 && position.left > self.position.left && position.right > self.position.right) {
-                // 有效元素
-                var threshold = {
-                  x: Math.abs(position.left - self.position.right),
-                  y: Math.abs(position.y - self.position.y)
-                }
-                if(nextElement === null || (threshold.x < nextThreshold.x) || (threshold.x === nextThreshold.x && threshold.y < nextThreshold.y)) {
-                  nextElement = el;
-                  nextPosition = position;
-                  nextThreshold = threshold;
-                }
-              }
-            }
-          })
-          if(nextElement !== null) {
-            this.el = nextElement;
-            this.position = nextPosition;
+            options["onChange"] && options["onChange"].call(this, nextElement);
           }
         },
         get root() {
@@ -163,25 +183,21 @@
           return _el;
         },
         set el(htmlElement) {
-          $(_el).removeClass(options.elExtractClass)
-          $(htmlElement).addClass(options.elExtractClass)
+          var $htmlElement = $(htmlElement);
+          $(_el).removeClass(options.elExtractClass);
+          $htmlElement.addClass(options.elExtractClass);
+          if(beforeEl === null) {
+            var height = $htmlElement.height();
+            var scrollTop = Math.max($htmlElement.offset().top - (height > windowHeight ? 0 : Math.round((windowHeight - height) / 2)), 0);
+            $(this.root).animate({ scrollTop: scrollTop }, options.scrollTime);
+          }
           return _el = htmlElement;
         },
-        get position() {
-          return _position;
-        },
-        set position(position) {
-          return _position = position;
-        }
       }
-      $(document).keydown(function(event) {
-        switch(event.keyCode) {
-          case 37: instance.left();break;
-          case 38: instance.up();break;
-          case 39: instance.right();break;
-          case 40: instance.down();break;
-        }
-      });
+      var callback = createKeydownCallback(instance, options.delay);
+      instance.el = options.el;
+      instance.root = options.root;
+      $(global.document).keydown(callback);
       return instance;
     }
   }
