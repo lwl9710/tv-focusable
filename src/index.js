@@ -6,6 +6,8 @@
     elExtractClass: "focusable-el-extract",
     scrollTime: 200,
     delay: 200,
+    isMove: true,
+    isScroll: true,
     methods: {}
   }
   var common = {
@@ -79,6 +81,8 @@
       var _root = null;
       var beforeEl = null;
       var instance = {
+        isScroll: options.isScroll,
+        isMove: options.isMove,
         methods: options.methods,
         showDialog: function(dialogRoot, el) {
           var nextElement =  el || $("[focusable]", dialogRoot).get(0);
@@ -147,28 +151,30 @@
         },
         // 移动方法
         __move: function(isValidElement, getThreshold) {
-          var self = this;
-          var nextElement = null;
-          var nextPosition = _position;
-          var nextThreshold = 0;
-          $("[focusable]", this.root).each(function(i, el) {
-            if(el !== self.el) {
-              var position = common.getElementPosition(el);
-              if(position.width > 0 && position.height > 0 && isValidElement(position, self)) {
-                // 有效元素
-                var threshold = getThreshold(position, self);
-                if(nextElement === null || (threshold < nextThreshold)) {
-                  nextElement = el;
-                  nextPosition = position;
-                  nextThreshold = threshold;
+          if(this.isMove) {
+            var self = this;
+            var nextElement = null;
+            var nextPosition = _position;
+            var nextThreshold = 0;
+            $("[focusable]", this.root).each(function(i, el) {
+              if(el !== self.el) {
+                var position = common.getElementPosition(el);
+                if(position.width > 0 && position.height > 0 && isValidElement(position, self)) {
+                  // 有效元素
+                  var threshold = getThreshold(position, self);
+                  if(nextElement === null || (threshold < nextThreshold)) {
+                    nextElement = el;
+                    nextPosition = position;
+                    nextThreshold = threshold;
+                  }
                 }
               }
+            });
+            if(nextElement !== null) {
+              _position = nextPosition;
+              this.el = nextElement;
+              options["onChange"] && options["onChange"].call(this, nextElement);
             }
-          });
-          if(nextElement !== null) {
-            _position = nextPosition;
-            this.el = nextElement;
-            options["onChange"] && options["onChange"].call(this, nextElement);
           }
         },
         get root() {
@@ -186,7 +192,7 @@
           var $htmlElement = $(htmlElement);
           $(_el).removeClass(options.elExtractClass);
           $htmlElement.addClass(options.elExtractClass);
-          if(beforeEl === null) {
+          if(beforeEl === null && this.isScroll) {
             var height = $htmlElement.height();
             var scrollTop = Math.max($htmlElement.offset().top - (height > windowHeight ? 0 : Math.round((windowHeight - height) / 2)), 0);
             $(this.root).animate({ scrollTop: scrollTop }, options.scrollTime);
