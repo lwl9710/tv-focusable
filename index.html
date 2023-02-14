@@ -196,17 +196,7 @@
 </div>
 <script type="text/javascript" src="src/index.js"></script>
 <script type="text/javascript">
-  var dashboard = IFocusable.create({
-    isScroll: true,
-    methods: {
-      onOk: function() {
-        this.showDialog($(".dialog").get(0));
-      },
-      onClose: function() {
-        this.hideDialog();
-      }
-    }
-  });
+  var dashboard = IFocusable.create();
 </script>
 </body>
 </html>

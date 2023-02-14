@@ -10,6 +10,13 @@
     isScroll: true,
     methods: {}
   }
+  var DEFAULT_CODE = {
+    OK: 13,
+    LEFT: 37,
+    UP: 38,
+    RIGHT: 39,
+    DOWN: 40
+  }
   var common = {
     // 合并对象
     assign: function(...args) {
@@ -48,14 +55,14 @@
       }
     }
   }
-  function createKeydownCallback(instance, delay) {
+  function createKeydownCallback(instance, delay, KEY_CODE) {
     var callback = common.useThrottle(function(event) {
       switch(event.keyCode) {
-        case 13: instance.__ok();break;
-        case 37: instance.__left();break;
-        case 38: instance.__up();break;
-        case 39: instance.__right();break;
-        case 40: instance.__down();break;
+        case KEY_CODE.OK: instance.__ok();break;
+        case KEY_CODE.LEFT: instance.__left();break;
+        case KEY_CODE.UP: instance.__up();break;
+        case KEY_CODE.RIGHT: instance.__right();break;
+        case KEY_CODE.DOWN: instance.__down();break;
       }
       event.preventDefault();
       return false;
@@ -200,7 +207,7 @@
           return _el = htmlElement;
         },
       }
-      var callback = createKeydownCallback(instance, options.delay);
+      var callback = createKeydownCallback(instance, options.delay, options.keyCode || DEFAULT_CODE);
       instance.el = options.el;
       instance.root = options.root;
       $(global.document).keydown(callback);
