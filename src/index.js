@@ -131,6 +131,7 @@
         showDialog: function(dialogRoot, el) {
           var nextElement =  el || $("[focusable]", dialogRoot).get(0);
           this.root = dialogRoot;
+          this.isScroll = false;
           beforeEl = this.el;
           this.el = nextElement;
           _position = common.getElementPosition(nextElement);
@@ -139,6 +140,7 @@
         hideDialog: function() {
           this.root = options.root;
           this.el = beforeEl;
+          this.isScroll = true;
           _position = common.getElementPosition(beforeEl);
           beforeEl = null;
         },

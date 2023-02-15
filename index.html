@@ -125,7 +125,7 @@
 </head>
 <body>
 <div class="box">
-  <div focusable class="left" focus="elFocus">dialog</div>
+  <div focusable class="left" focus="elFocus" ok="openDialog">dialog</div>
   <div class="right">
     <div class="blue">
       <div focusable></div>
@@ -163,7 +163,7 @@
   </div>
 </div>
 <div class="box">
-  <div class="left" focusable  ok="onOk">dialog</div>
+  <div class="left" focusable  ok="openDialog">dialog</div>
   <div class="right">
     <div class="blue">
       <div focusable></div>
@@ -171,7 +171,7 @@
       <div focusable></div>
       <div focusable></div>
     </div>
-    <div focusable  ok="onOk">dialog</div>
+    <div focusable  ok="openDialog">dialog</div>
     <div focusable></div>
     <div class="blue">
       <div focusable></div>
@@ -217,12 +217,27 @@
       <div focusable></div>
       <div focusable></div>
     </div>
+  </div>
+</div>
+<div class="other" focusable>
+
+</div>
+<div class="dialog">
+  <div class="btns">
+    <div focusable class="btn" ok="closeDialog">确定</div>
+    <div focusable class="btn" ok="closeDialog">取消</div>
   </div>
 </div>
 <script type="text/javascript" src="src/index.js"></script>
 <script type="text/javascript">
   var dashboard = IFocusable.create({
     methods: {
+      openDialog: function() {
+        this.showDialog($(".dialog").get(0));
+      },
+      closeDialog: function() {
+        this.hideDialog();
+      },
       elFocus: function() {
         console.log(this);
       }
