@@ -65,20 +65,27 @@
           callback.apply(this, arguments);
         }
       }
+    },
+    // 定义不改变属性
+    defineFinalProperty: function(o, key,value) {
+      Object.defineProperty(o,key, {
+        writable: false,
+        enumerable: false,
+        configurable: false,
+        value: value
+      });
     }
   }
   // 生成键盘监听事件
   function createKeydownCallback(instance, delay, KEY_CODE) {
     var callback = common.useThrottle(function(event) {
       switch(event.keyCode) {
-        case KEY_CODE.OK: instance.__ok();break;
-        case KEY_CODE.LEFT: instance.__left();break;
-        case KEY_CODE.UP: instance.__up();break;
-        case KEY_CODE.RIGHT: instance.__right();break;
-        case KEY_CODE.DOWN: instance.__down();break;
+        case KEY_CODE.OK: instance["__ok"]();break;
+        case KEY_CODE.LEFT: instance["__left"]();break;
+        case KEY_CODE.UP: instance["__up"]();break;
+        case KEY_CODE.RIGHT: instance["__right"]();break;
+        case KEY_CODE.DOWN: instance["__down"]();break;
       }
-      event.preventDefault();
-      return false;
     }, delay);
     return function(event) {
       callback(event);
@@ -158,77 +165,6 @@
             return true;
           }
         },
-        __ok: function() {
-          if(this.isActive) {
-            this.triggerEvent("ok");
-          }
-        },
-        __up: function() {
-          if(this.triggerEvent("up")) {
-            this.__move(function(position) {
-              return position.top < _position.top && position.bottom < _position.bottom;
-            }, function(position) {
-              return Math.abs(position.left - _position.left) + Math.abs(_position.top - position.bottom);
-            });
-          }
-        },
-        __down: function() {
-          if(this.triggerEvent("down")) {
-            this.__move(function(position) {
-              return position.bottom > _position.bottom && position.top > _position.top;
-            }, function(position) {
-              return Math.abs(position.left - _position.left) + Math.abs(position.top - _position.bottom);
-            });
-          }
-        },
-        __left: function() {
-          if(this.triggerEvent("left")) {
-            this.__move(function(position) {
-              return position.left < _position.left && position.right < _position.right;
-            }, function(position) {
-              return Math.abs(_position.left - position.right) + Math.abs(position.top - _position.top);
-            });
-          }
-        },
-        __right: function() {
-          if(this.triggerEvent("right")) {
-            this.__move(function(position) {
-              return position.left > _position.left && position.right > _position.right;
-            }, function(position) {
-              return Math.abs(position.left - _position.right) + Math.abs(position.top - _position.top);
-            });
-          }
-        },
-        // 移动方法
-        __move: function(isValidElement, getThreshold) {
-          if(this.isMove && this.isActive) {
-            var self = this;
-            var nextElement = null;
-            var nextPosition = _position;
-            var nextThreshold = 0;
-            $("[focusable]", this.root).each(function(i, el) {
-              if(el !== self.el) {
-                var position = common.getElementPosition(el);
-                if(position.width > 0 && position.height > 0 && isValidElement(position, self)) {
-                  // 有效元素
-                  var threshold = getThreshold(position, self);
-                  if(nextElement === null || (threshold < nextThreshold)) {
-                    nextElement = el;
-                    nextPosition = position;
-                    nextThreshold = threshold;
-                  }
-                }
-              }
-            });
-            if(nextElement !== null) {
-              this.triggerEvent("blur");
-              _position = nextPosition;
-              this.el = nextElement;
-              this.triggerEvent("focus");
-              options["onChange"] && options["onChange"].call(this);
-            }
-          }
-        },
         get root() {
           return _root;
         },
@@ -269,6 +205,77 @@
           }
         },
       }
+      common.defineFinalProperty(instance, "__ok", function() {
+        if(this.isActive) {
+          this.triggerEvent("ok");
+        }
+      });
+      common.defineFinalProperty(instance, "__up", function() {
+        if(this.triggerEvent("up")) {
+          this.__move(function(position) {
+            return position.top < _position.top && position.bottom < _position.bottom;
+          }, function(position) {
+            return Math.abs(position.left - _position.left) + Math.abs(_position.top - position.bottom);
+          });
+        }
+      });
+      common.defineFinalProperty(instance, "__down", function() {
+        if(this.triggerEvent("down")) {
+          this.__move(function(position) {
+            return position.bottom > _position.bottom && position.top > _position.top;
+          }, function(position) {
+            return Math.abs(position.left - _position.left) + Math.abs(position.top - _position.bottom);
+          });
+        }
+      });
+      common.defineFinalProperty(instance, "__left", function() {
+        if(this.triggerEvent("left")) {
+          this.__move(function(position) {
+            return position.left < _position.left && position.right < _position.right;
+          }, function(position) {
+            return Math.abs(_position.left - position.right) + Math.abs(position.top - _position.top);
+          });
+        }
+      });
+      common.defineFinalProperty(instance, "__right", function() {
+        if(this.triggerEvent("right")) {
+          this.__move(function(position) {
+            return position.left > _position.left && position.right > _position.right;
+          }, function(position) {
+            return Math.abs(position.left - _position.right) + Math.abs(position.top - _position.top);
+          });
+        }
+      });
+      common.defineFinalProperty(instance, "__move", function(isValidElement, getThreshold) {
+        if(this.isMove && this.isActive) {
+          var self = this;
+          var nextElement = null;
+          var nextPosition = _position;
+          var nextThreshold = 0;
+          $("[focusable]", this.root).each(function(i, el) {
+            if(el !== self.el) {
+              var position = common.getElementPosition(el);
+              if(position.width > 0 && position.height > 0 && isValidElement(position, self)) {
+                // 有效元素
+                var threshold = getThreshold(position, self);
+                if(nextElement === null || (threshold < nextThreshold)) {
+                  nextElement = el;
+                  nextPosition = position;
+                  nextThreshold = threshold;
+                }
+              }
+            }
+          });
+          if(nextElement !== null) {
+            this.triggerEvent("blur");
+            _position = nextPosition;
+            this.el = nextElement;
+            this.triggerEvent("focus");
+            options["onChange"] && options["onChange"].call(this);
+          }
+        }
+      });
+
       var callback = createKeydownCallback(instance, options.delay, options.keyCode || DEFAULT_CODE);
       instance.root = options.root;
       instance.el = options.el;
