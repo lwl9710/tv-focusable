@@ -1,15 +1,25 @@
 (function(global) {
   var DEFAULT_OPTIONS = {
-    // 安全距离
+    // 进行焦点管理的容器
     root: global.document.documentElement,
-    rootExtractClass: "focusable-root-extract",
-    elExtractClass: "focusable-el-extract",
+    // 进行焦点管理的容器类名
+    rootExtractClass: "focusable-root",
+    // 以获取焦点元素的类名
+    elExtractClass: "focusable-el-focus",
+    // 滚动时长
     scrollTime: 200,
+    // 移动触发延迟
     delay: 200,
+    // 是否处于激活状态
+    isActive: true,
+    // 元素是否可移动
     isMove: true,
+    // 是否可滚动
     isScroll: true,
+    // 焦点元素的方法集合
     methods: {}
   }
+  // 按键键位
   var DEFAULT_CODE = {
     OK: 13,
     LEFT: 37,
@@ -29,6 +39,7 @@
       }
       return resource;
     },
+    // 获取元素位置信息
     getElementPosition: function(el) {
       var $el = $(el);
       var offset = $el.offset();
@@ -43,6 +54,7 @@
         bottom: offset.top + height
       }
     },
+    // 使用节流函数
     useThrottle: function(callback, delay) {
       if(!delay)delay = 300;
       var isTrigger = true;
@@ -55,6 +67,7 @@
       }
     }
   }
+  // 生成键盘监听事件
   function createKeydownCallback(instance, delay, KEY_CODE) {
     var callback = common.useThrottle(function(event) {
       switch(event.keyCode) {
@@ -73,6 +86,7 @@
       return false;
     }
   }
+  // 全局导出
   global.IFocusable = {
     create: function(options) {
       options = common.assign(DEFAULT_OPTIONS, {
@@ -87,10 +101,29 @@
       var _el = null;
       var _root = null;
       var beforeEl = null;
+      var isActive = options.isActive;
       var instance = {
+        // 滚动元素 默认整个页面窗口
+        scrollEl: null,
+        // 是否处于激活状态
+        isActive: options.isActive,
+        // 是否可滚动
         isScroll: options.isScroll,
+        // 是否可移动
         isMove: options.isMove,
+        // 元素方法集合
         methods: options.methods,
+        // 设置滚动元素
+        setScrollElement: function(scrollRoot) {
+          this.scrollEl = scrollRoot;
+          windowHeight = $(scrollRoot).height();
+        },
+        // 重置滚动元素
+        resetScrollElement: function() {
+          this.scrollEl = null;
+          windowHeight = window.innerHeight || document.html.clientHeight || document.body.clientHeight;
+        },
+        // 显示dialog
         showDialog: function(dialogRoot, el) {
           var nextElement =  el || $("[focusable]", dialogRoot).get(0);
           this.root = dialogRoot;
@@ -98,12 +131,14 @@
           this.el = nextElement;
           _position = common.getElementPosition(nextElement);
         },
+        // 隐藏dialog
         hideDialog: function() {
           this.root = options.root;
           this.el = beforeEl;
           _position = common.getElementPosition(beforeEl);
           beforeEl = null;
         },
+        // 触发元素事件
         triggerEvent: function(eventType, el) {
           if(!el)el = this.el;
           var propertyArr = ($(el).attr(eventType) || "").split(".");
@@ -118,7 +153,9 @@
           }
         },
         __ok: function() {
-          this.triggerEvent("ok");
+          if(this.isActive) {
+            this.triggerEvent("ok");
+          }
         },
         __up: function() {
           if(this.triggerEvent("up")) {
@@ -158,7 +195,7 @@
         },
         // 移动方法
         __move: function(isValidElement, getThreshold) {
-          if(this.isMove) {
+          if(this.isMove && this.isActive) {
             var self = this;
             var nextElement = null;
             var nextPosition = _position;
@@ -178,9 +215,11 @@
               }
             });
             if(nextElement !== null) {
+              this.triggerEvent("blur");
               _position = nextPosition;
               this.el = nextElement;
-              options["onChange"] && options["onChange"].call(this, nextElement);
+              this.triggerEvent("focus");
+              options["onChange"] && options["onChange"].call(this);
             }
           }
         },
@@ -200,16 +239,31 @@
           $(_el).removeClass(options.elExtractClass);
           $htmlElement.addClass(options.elExtractClass);
           if(beforeEl === null && this.isScroll) {
-            var height = $htmlElement.height();
-            var scrollTop = Math.max($htmlElement.offset().top - (height > windowHeight ? 0 : Math.round((windowHeight - height) / 2)), 0);
-            $(this.root).animate({ scrollTop: scrollTop }, options.scrollTime);
+            var height = _position.height;
+            var scrollTop = Math.max(_position.top - (height > windowHeight ? _position.top : Math.round((windowHeight - height) / 2)), 0);
+            if(this.scrollEl) {
+              $(this.scrollEl).animate({ scrollTop: scrollTop - this.scrollEl.offsetTop }, options.scrollTime);
+            } else {
+              $(this.root).animate({ scrollTop: scrollTop }, options.scrollTime);
+            }
           }
           return _el = htmlElement;
         },
+        get isActive() {
+          return isActive;
+        },
+        set isActive(state) {
+          isActive = state;
+          if(isActive === false) {
+            $(_el).removeClass(options.elExtractClass);
+          } else {
+            $(_el).addClass(options.elExtractClass);
+          }
+        },
       }
       var callback = createKeydownCallback(instance, options.delay, options.keyCode || DEFAULT_CODE);
-      instance.el = options.el;
       instance.root = options.root;
+      instance.el = options.el;
       $(global.document).keydown(callback);
       return instance;
     }
