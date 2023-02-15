@@ -96,12 +96,14 @@
   // 全局导出
   global.IFocusable = {
     create: function(options) {
-      options = common.assign(DEFAULT_OPTIONS, {
-        el: $("[focusable=\"autofocus\"]").get(0) || $("[focusable]", options.root).get(0)
-      }, options);
+      options = common.assign(DEFAULT_OPTIONS, options);
       if(!options.el) {
-        console.warn("The create is invalid and focusable element not existent.");
-        return ;
+        var el = $("[focusable=\"autofocus\"]").get(0) || $("[focusable]", options.root).get(0);
+        if(!el) {
+          console.error("The create is invalid and focusable element not existent.");
+          return null;
+        }
+        options.el = el;
       }
       var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
       var windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;

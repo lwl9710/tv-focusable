@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <title>Title</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover" />
+  <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        background-color: #eee;
+    }
+    div {
+        position: absolute;
+        width: 100px;
+        height: 300px;
+        background-color: deepskyblue;
+    }
+    div:nth-child(1) {
+        left: 100px;
+        top: 200px;
+    }
+    div:nth-child(2) {
+        left: 300px;
+        top: 300px;
+    }
+    div:nth-child(3) {
+        left: 500px;
+        top: 100px;
+    }
+    div:nth-child(4) {
+        left: 700px;
+        top: 150px;
+    }
+    div:nth-child(5) {
+        left: 900px;
+        top: 280px;
+    }
+    div.focusable-el-focus {
+        background-color: greenyellow;
+    }
+  </style>
+  <script src="./js/jquery.js"></script>
+</head>
+<body>
+<div focusable>
+
+</div>
+
+<div focusable>
+
+</div>
+<div focusable>
+
+</div>
+<div focusable>
+
+</div>
+<div focusable>
+
+</div>
+<script src="src/index.js"></script>
+<script type="text/javascript">
+  var dashboard = IFocusable.create();
+</script>
+</body>
+</html>
