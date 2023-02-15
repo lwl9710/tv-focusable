@@ -96,7 +96,8 @@
         console.warn("The create is invalid and focusable element not existent.");
         return ;
       }
-      var windowHeight = window.innerHeight || document.html.clientHeight || document.body.clientHeight;
+      var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      var windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
       var _position = common.getElementPosition(options.el);
       var _el = null;
       var _root = null;
@@ -115,12 +116,15 @@
         methods: options.methods,
         // 设置滚动元素
         setScrollElement: function(scrollRoot) {
+          var $scrollRoot = $(scrollRoot);
           this.scrollEl = scrollRoot;
-          windowHeight = $(scrollRoot).height();
+          windowWidth = $scrollRoot.width();
+          windowHeight = $scrollRoot.height();
         },
         // 重置滚动元素
         resetScrollElement: function() {
           this.scrollEl = null;
+          windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
           windowHeight = window.innerHeight || document.html.clientHeight || document.body.clientHeight;
         },
         // 显示dialog
@@ -239,12 +243,14 @@
           $(_el).removeClass(options.elExtractClass);
           $htmlElement.addClass(options.elExtractClass);
           if(beforeEl === null && this.isScroll) {
+            var width = _position.width;
             var height = _position.height;
-            var scrollTop = Math.max(_position.top - (height > windowHeight ? _position.top : Math.round((windowHeight - height) / 2)), 0);
+            var scrollTop = Math.max(_position.top - (height > windowHeight ? 0 : Math.round((windowHeight - height) / 2)), 0);
+            var scrollLeft = Math.max(_position.left - (width > windowWidth ? 0 : Math.round(windowWidth - width) / 2), 0);
             if(this.scrollEl) {
-              $(this.scrollEl).animate({ scrollTop: scrollTop - this.scrollEl.offsetTop }, options.scrollTime);
+              $(this.scrollEl).animate({ scrollTop: scrollTop - this.scrollEl.offsetTop, scrollLeft: scrollLeft - this.scrollEl.offsetLeft }, options.scrollTime);
             } else {
-              $(this.root).animate({ scrollTop: scrollTop }, options.scrollTime);
+              $(this.root).animate({ scrollTop: scrollTop, scrollLeft: scrollLeft }, options.scrollTime);
             }
           }
           return _el = htmlElement;
